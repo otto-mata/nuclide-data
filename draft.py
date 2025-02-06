@@ -2,13 +2,8 @@ from __future__ import annotations
 import numpy as np
 import pickle
 from typing import Callable, TypeAlias
-
-
-def get_atoms() -> list[Atom]:
-    with open("atoms.pickled", "rb") as f:
-        data = pickle.load(f)
-    return data
-
+import os
+import gzip
 
 class dotdict(dict):
     """dot.notation access to dictionary attributes"""
@@ -23,38 +18,6 @@ class Utils:
     def years_to_milliseconds(cls, years: int):
         ms_per_year = 3.1556926080000003814697265625e10
         return years * ms_per_year
-
-
-"""AtomicNumber
-Element
-Symbol
-AtomicMass
-NumberofNeutrons
-NumberofProtons
-NumberofElectrons
-Period
-Group
-Phase
-Radioactive
-Natural
-Metal
-Nonmetal
-Metalloid
-Type
-AtomicRadius
-Electronegativity
-FirstIonization
-Density
-MeltingPoint
-BoilingPoint
-NumberOfIsotopes
-Discoverer
-Year
-SpecificHeat
-NumberofShells
-NumberofValence
-"""
-
 
 class Atom:
     Z: int
@@ -103,32 +66,11 @@ class DecayMode:
     positron = 4
     electron = 5
 
-
-class Decay:
-    Function: TypeAlias = Callable[["Isotope"], "Isotope"]
-
-    @staticmethod
-    def alpha(nuclide: Isotope) -> Isotope:
-        z = nuclide.Z - 2
-        n = nuclide.N - 2
-        atom = next(filter(lambda a: a.Z == z, get_atoms()))
-        return Isotope(
-            None,
-            z,
-            n,
-            emission=None,
-            mother=nuclide,
-            daughter=None,
-            name=atom.name,
-            symbol=atom.symbol,
-        )
-
-
 class Isotope(Atom):
     half_life: int
     a_daughter: Atom
     mother: Isotope
-    emission: Decay.Function
+    emission: DecayMode
     stable: int
     chain_first: int
 
@@ -137,7 +79,7 @@ class Isotope(Atom):
         hl: int,
         z: int,
         n: int,
-        emission: Decay.Function = None,
+        emission: DecayMode = None,
         name: str = None,
         symbol: str = None,
         daughter: Atom = None,
@@ -175,11 +117,5 @@ class Isotope(Atom):
 
 class Uranium235(Isotope):
     def __init__(self):
-        super().__init__(22.21e18, 92, 143, Decay.alpha, "Uranium", "U")
+        super().__init__(22.21e18, 92, 143, DecayMode.alpha, "Uranium", "U")
 
-
-isotope = Uranium235()
-print(isotope.daughter_isotope().name)
-# atoms = get_atoms()
-# for atom in atoms:
-#     print(f"{atom.name}: {atom.isotopes}")
